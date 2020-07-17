@@ -174,6 +174,7 @@ public class CustomTerrain : MonoBehaviour {
     public Terrain terrain;
     public TerrainData terrainData;
 
+    //云生成算法
     public void GenerateClouds()
     {
         GameObject cloudManager = GameObject.Find("CloudManager");
@@ -219,6 +220,7 @@ public class CustomTerrain : MonoBehaviour {
 
             if(UnityEngine.Random.Range(0,10) < 5)
             {
+                //阴影投射器
                 Projector cp = cloudProjector.AddComponent<Projector>();
                 cp.material = cloudShadowMaterial;
                 cp.farClipPlane = terrainData.size.y;
@@ -228,7 +230,7 @@ public class CustomTerrain : MonoBehaviour {
                 cp.fieldOfView = 20.0f;
             }
 
-
+            //云的阴影
             cloudRend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             cloudRend.receiveShadows = false;
             ParticleSystem.MainModule main = cloudSystem.main;
@@ -275,6 +277,7 @@ public class CustomTerrain : MonoBehaviour {
 
     }
 
+    //大峡谷生成算法
     float[,] tempHeightMap;
     public void DigCanyon()
     {
@@ -312,6 +315,7 @@ public class CustomTerrain : MonoBehaviour {
         CanyonCrawler(x, y + 1, height + UnityEngine.Random.Range(slope, slope + 0.01f), slope, maxDepth);
     }
 
+    //雨侵蚀
     void Rain()
     {
         float[,] heightMap = terrainData.GetHeights(0, 0,
@@ -327,6 +331,7 @@ public class CustomTerrain : MonoBehaviour {
         terrainData.SetHeights(0, 0, heightMap);
     }
 
+    //热侵蚀
     void Thermal()
     {
         float[,] heightMap = terrainData.GetHeights(0, 0,
@@ -354,7 +359,7 @@ public class CustomTerrain : MonoBehaviour {
 
         terrainData.SetHeights(0, 0, heightMap);
     }
-
+    //潮汐侵蚀
     void Tidal()
     {
         float[,] heightMap = terrainData.GetHeights(0, 0,
@@ -382,12 +387,14 @@ public class CustomTerrain : MonoBehaviour {
         terrainData.SetHeights(0, 0, heightMap);
     }
 
-
+    #region 河流侵蚀
     void River()
     {
-        float[,] heightMap = terrainData.GetHeights(0, 0,
-                                            terrainData.heightmapWidth,
-                                            terrainData.heightmapHeight);
+        float[,] heightMap = terrainData.GetHeights
+        (
+            0, 0,terrainData.heightmapWidth,
+            terrainData.heightmapHeight
+        );
         float[,] erosionMap = new float[terrainData.heightmapWidth, terrainData.heightmapHeight];
 
         for (int i = 0; i < droplets; i++)
@@ -417,75 +424,6 @@ public class CustomTerrain : MonoBehaviour {
         terrainData.SetHeights(0, 0, heightMap);
     }
 
-    void SmoothTerrain()
-    {
-        float[,] heightMap = terrainData.GetHeights(0, 0,
-                                            terrainData.heightmapWidth,
-                                            terrainData.heightmapHeight);
-        int width = terrainData.heightmapWidth;
-        int height = terrainData.heightmapHeight;
-
-        for (int y = 0; y < terrainData.heightmapHeight; y++)
-        {
-            for (int x = 0; x < terrainData.heightmapWidth; x++)
-            {
-                float avgHeight = 0;
-
-                if (y == 0 && x > 0 && x < width - 1)
-                {
-                    avgHeight = (heightMap[x, y] +
-                                    heightMap[x + 1, y] +
-                                    heightMap[x - 1, y] +
-                                    heightMap[x + 1, y + 1] +
-                                    heightMap[x - 1, y + 1] +
-                                    heightMap[x, y + 1]) / 6.0f;
-                }
-                else if (x == 0 && y > 0 && y < height - 1)
-                {
-                    avgHeight = (heightMap[x, y] +
-                                    heightMap[x + 1, y] +
-                                    heightMap[x + 1, y + 1] +
-                                    heightMap[x + 1, y - 1] +
-                                    heightMap[x, y + 1] +
-                                    heightMap[x, y - 1]) / 6.0f;
-                }
-                else if (y == height - 1 && x > width - 1 && x < 0)
-                {
-                    avgHeight = (heightMap[x, y] +
-                                    heightMap[x + 1, y] +
-                                    heightMap[x - 1, y] +
-                                    heightMap[x + 1, y - 1] +
-                                    heightMap[x - 1, y - 1] +
-                                    heightMap[x, y - 1]) / 6.0f;
-                }
-                else if (x == width - 1 && y > height - 1 && y < 0)
-                {
-                    avgHeight = (heightMap[x, y] +
-                                    heightMap[x - 1, y] +
-                                    heightMap[x - 1, y + 1] +
-                                    heightMap[x - 1, y - 1] +
-                                    heightMap[x, y + 1] +
-                                    heightMap[x, y - 1]) / 6.0f;
-                }
-                else if (y > 0 && x > 0 && y < height - 1 && x < width - 1)
-                {
-                    avgHeight = (heightMap[x, y] +
-                                    heightMap[x + 1, y] +
-                                    heightMap[x - 1, y] +
-                                    heightMap[x + 1, y + 1] +
-                                    heightMap[x - 1, y - 1] +
-                                    heightMap[x + 1, y - 1] +
-                                    heightMap[x - 1, y + 1] +
-                                    heightMap[x, y + 1] +
-                                    heightMap[x, y - 1]) / 9.0f;
-                }
-
-                heightMap[x, y] = avgHeight;
-            }
-        }
-        terrainData.SetHeights(0, 0, heightMap);
-    }
-
     float[,] RunRiver(Vector2 dropletPosition, float[,] heightMap, float[,] erosionMap, int width, int height)
     {
         while (erosionMap[(int)dropletPosition.x, (int)dropletPosition.y] > 0)
@@ -512,11 +450,16 @@ public class CustomTerrain : MonoBehaviour {
         return erosionMap;
     }
 
+    #endregion
+
+    //风侵蚀
     void Wind()
     {
-        float[,] heightMap = terrainData.GetHeights(0, 0,
-                                            terrainData.heightmapWidth,
-                                            terrainData.heightmapHeight);
+        float[,] heightMap = terrainData.GetHeights
+        (
+            0, 0,terrainData.heightmapWidth,
+            terrainData.heightmapHeight
+        );
         int width = terrainData.heightmapWidth;
         int height = terrainData.heightmapHeight;
 
@@ -544,13 +487,12 @@ public class CustomTerrain : MonoBehaviour {
                     heightMap[(int)digCoords.x, (int)digCoords.y] -= 0.001f;
                     heightMap[(int)pileCoords.x, (int)pileCoords.y] += 0.001f;
                 }
-
             }
         }
         terrainData.SetHeights(0, 0, heightMap);
     }
 
-
+    //添加水
     public void AddWater()
     {
         GameObject water = GameObject.Find("water");
@@ -566,50 +508,60 @@ public class CustomTerrain : MonoBehaviour {
         water.transform.localScale = new Vector3(terrainData.size.x, 1, terrainData.size.z);
     }
 
+    #region 绘制海滨区域
     public void DrawShoreline()
     {
-        float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth,
-                                                    terrainData.heightmapHeight);
+        float[,] heightMap = terrainData.GetHeights
+        (
+            0, 0, terrainData.heightmapWidth,
+            terrainData.heightmapHeight
+        );
 
         int quadCount = 0;
-        //GameObject quads = new GameObject("QUADS");
         for (int y = 0; y < terrainData.heightmapHeight; y++)
         {
             for (int x = 0; x < terrainData.heightmapWidth; x++)
             {
-                //find spot on shore
+                //要找到海滨位置，先遍历所有点
                 Vector2 thisLocation = new Vector2(x, y);
-                List<Vector2> neighbours = GenerateNeighbours(thisLocation,
-                                                              terrainData.heightmapWidth,
-                                                              terrainData.heightmapHeight);
+                List<Vector2> neighbours = GenerateNeighbours
+                (
+                    thisLocation,
+                    terrainData.heightmapWidth,
+                    terrainData.heightmapHeight
+                );
+
                 foreach (Vector2 n in neighbours)
                 {
+                    //高低差
                     if (heightMap[x, y] < waterHeight && heightMap[(int)n.x, (int)n.y] > waterHeight)
                     {
+                        //这里限定连线数量
                         //if (quadCount < 1000)
                         //{
-                            quadCount++;
-                            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                            go.transform.localScale *= 20.0f;
+                        quadCount++;
+                        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                        go.transform.localScale *= 20.0f;
 
-                            go.transform.position = this.transform.position +
-                                            new Vector3(y / (float)terrainData.heightmapHeight
-                                                          * terrainData.size.z,
-                                                        waterHeight * terrainData.size.y,
-                                                        x / (float)terrainData.heightmapWidth
-                                                          * terrainData.size.x);
+                        //左手翻转到右手坐标系
+                        go.transform.position = this.transform.position + new Vector3
+                        (
+                            y / (float)terrainData.heightmapHeight * terrainData.size.z,
+                            waterHeight * terrainData.size.y,
+                            x / (float)terrainData.heightmapWidth
+                            * terrainData.size.x
+                        );
+                        //锁定高点视角
+                        go.transform.LookAt(new Vector3
+                        (
+                            n.y / (float)terrainData.heightmapHeight * terrainData.size.z,
+                            waterHeight * terrainData.size.y,
+                            n.x / (float)terrainData.heightmapWidth * terrainData.size.x
+                        ));
 
-                            go.transform.LookAt(new Vector3(n.y / (float)terrainData.heightmapHeight
-                                                                * terrainData.size.z,
-                                                            waterHeight * terrainData.size.y,
-                                                            n.x / (float)terrainData.heightmapWidth
-                                                                * terrainData.size.x));    
+                        go.transform.Rotate(90, 0, 0);
 
-                            go.transform.Rotate(90, 0, 0);
-
-                            go.tag = "Shore";
-
-
+                        go.tag = "Shore";
                             //go.transform.parent = quads.transform;
                        // }
                     }
@@ -617,6 +569,7 @@ public class CustomTerrain : MonoBehaviour {
             }
         }
 
+        //合并mesh
         GameObject[] shoreQuads = GameObject.FindGameObjectsWithTag("Shore");
         MeshFilter[] meshFilters = new MeshFilter[shoreQuads.Length];
         for (int m = 0; m < shoreQuads.Length; m++)
@@ -652,10 +605,10 @@ public class CustomTerrain : MonoBehaviour {
 
         for (int sQ = 0; sQ < shoreQuads.Length; sQ++)
             DestroyImmediate(shoreQuads[sQ]);
-
-
     }
+    #endregion
 
+    #region details grass rock flower 细节物件
     public void AddDetails()
     {
         DetailPrototype[] newDetailPrototypes;
@@ -687,24 +640,33 @@ public class CustomTerrain : MonoBehaviour {
         }
         terrainData.detailPrototypes = newDetailPrototypes;
 
-        float[,] heightMap = terrainData.GetHeights(0,0,
-                                                    terrainData.heightmapWidth,
-                                                    terrainData.heightmapHeight);
+        float[,] heightMap = terrainData.GetHeights
+        (
+            0,0,
+            terrainData.heightmapWidth,
+            terrainData.heightmapHeight
+        );
 
         for (int i = 0; i < terrainData.detailPrototypes.Length; i++)
         {
+            //连片绘制，而不是点状绘制，连片也可以做优化
             int[,] detailMap = new int[terrainData.detailWidth, terrainData.detailHeight];
-
             for (int y = 0; y < terrainData.detailHeight; y += detailSpacing)
             {
                 for (int x = 0; x < terrainData.detailWidth; x += detailSpacing)
                 {
                     if (UnityEngine.Random.Range(0.0f, 1.0f) > details[i].density) continue;
+                    //从小范围映射到大范围
                     int xHM = (int)(x/(float)terrainData.detailWidth * terrainData.heightmapWidth);
                     int yHM = (int)(y/(float)terrainData.detailHeight * terrainData.heightmapHeight);
 
-                    float thisNoise = Utils.Mapping(Mathf.PerlinNoise(x*details[i].feather,
-                                                                  y*details[i].feather),0,1,0.5f,1);
+                    float thisNoise = Utils.Mapping
+                    (
+                        Mathf.PerlinNoise(x*details[i].feather,
+                        y*details[i].feather),
+                        0, 1, 0.5f, 1
+                    );
+                    //噪声、重叠率控制边界
                     float thisHeightStart = details[i].minHeight * thisNoise - 
                                             details[i].overlap  * thisNoise;
 
@@ -712,8 +674,11 @@ public class CustomTerrain : MonoBehaviour {
                                             details[i].overlap  * thisNoise;
                     
                     float thisHeight = heightMap[yHM,xHM];
-                    float steepness = terrainData.GetSteepness(xHM / (float)terrainData.size.x,
-                                                               yHM / (float)terrainData.size.z);
+                    float steepness = terrainData.GetSteepness
+                    (
+                        xHM / (float)terrainData.size.x,
+                        yHM / (float)terrainData.size.z
+                    );
                     if((thisHeight >= thisHeightStart && thisHeight <= nextHeightStart) &&
                         (steepness >= details[i].minSlope && steepness <= details[i].maxSlope))
                     {
@@ -723,7 +688,6 @@ public class CustomTerrain : MonoBehaviour {
             }
             terrainData.SetDetailLayer(0, 0, i, detailMap);
         }
-
     }
 
 
@@ -748,6 +712,7 @@ public class CustomTerrain : MonoBehaviour {
         }
         details = keptDetails;
     }
+    #endregion
 
     #region treelayer 设置树木
     public void PlantVegetation()
@@ -785,11 +750,12 @@ public class CustomTerrain : MonoBehaviour {
                         z / (float)terrainData.size.z
                     );
 
+                    //高度坡度限定
                     if ((thisHeight >= thisHeightStart && thisHeight <= thisHeightEnd) &&
                         (steepness >= vegetation[tp].minSlope && steepness <= vegetation[tp].maxSlope))
                     {
                         TreeInstance instance = new TreeInstance();
-                        //在5*5的格子随机选一个坐标
+                        //在5*5的区域内抖动，坐标映射防止抖动超出地形
                         instance.position = new Vector3
                         (
                             (x + UnityEngine.Random.Range(-5.0f, 5.0f)) / terrainData.size.x,
@@ -805,10 +771,11 @@ public class CustomTerrain : MonoBehaviour {
 
                         RaycastHit hit;
                         int layerMask = 1 << terrainLayer;
-
+                        //在上下10米随机的播种，营造高低错落
                         if (Physics.Raycast(treeWorldPos + new Vector3(0, 10, 0), -Vector3.up, out hit, 100, layerMask) ||
                             Physics.Raycast(treeWorldPos - new Vector3(0, 10, 0), Vector3.up, out hit, 100, layerMask))
                         {
+                            //高度映射
                             float treeHeight = (hit.point.y - this.transform.position.y) / terrainData.size.y;
                             instance.position = new Vector3
                             (
@@ -823,6 +790,7 @@ public class CustomTerrain : MonoBehaviour {
                                 vegetation[tp].maxRotation
                             );
                             instance.prototypeIndex = tp;
+                            /*tree properties*/
                             //纹理颜色
                             instance.color = Color.Lerp
                             (
@@ -840,8 +808,6 @@ public class CustomTerrain : MonoBehaviour {
                             allVegetation.Add(instance);
                             if (allVegetation.Count >= maxTrees) goto TREESDONE;
                         }
-
-
                     }
                 }
             }
@@ -1014,13 +980,13 @@ public class CustomTerrain : MonoBehaviour {
             
     }
 
+    /*取T临近的四个o坐标位置
+     o---o 
+     | T |
+     o---o
+     */
     List<Vector2> GenerateNeighbours(Vector2 pos, int width, int height)
     {
-        /*取临近的四个位置
-         o---o 
-         | O |
-         o---o
-         */
         List<Vector2> neighbours = new List<Vector2>();
         for (int y = -1; y < 2; y++)
         {
@@ -1041,7 +1007,7 @@ public class CustomTerrain : MonoBehaviour {
         return neighbours;
     }
 
-    //平滑
+    #region 平滑
     public void Smooth()
     {
         float[,] heightMap = terrainData.GetHeights(0, 0, terrainData.heightmapWidth,
@@ -1083,6 +1049,77 @@ public class CustomTerrain : MonoBehaviour {
         terrainData.SetHeights(0, 0, heightMap);
         EditorUtility.ClearProgressBar();
     }
+    void SmoothTerrain()
+    {
+        float[,] heightMap = terrainData.GetHeights
+        (
+            0, 0, terrainData.heightmapWidth,
+            terrainData.heightmapHeight
+        );
+        int width = terrainData.heightmapWidth;
+        int height = terrainData.heightmapHeight;
+
+        for (int y = 0; y < terrainData.heightmapHeight; y++)
+        {
+            for (int x = 0; x < terrainData.heightmapWidth; x++)
+            {
+                float avgHeight = 0;
+
+                if (y == 0 && x > 0 && x < width - 1)
+                {
+                    avgHeight = (heightMap[x, y] +
+                                heightMap[x + 1, y] +
+                                heightMap[x - 1, y] +
+                                heightMap[x + 1, y + 1] +
+                                heightMap[x - 1, y + 1] +
+                                heightMap[x, y + 1]) / 6.0f;
+                }
+                else if (x == 0 && y > 0 && y < height - 1)
+                {
+                    avgHeight = (heightMap[x, y] +
+                                heightMap[x + 1, y] +
+                                heightMap[x + 1, y + 1] +
+                                heightMap[x + 1, y - 1] +
+                                heightMap[x, y + 1] +
+                                heightMap[x, y - 1]) / 6.0f;
+                }
+                else if (y == height - 1 && x > width - 1 && x < 0)
+                {
+                    avgHeight = (heightMap[x, y] +
+                                heightMap[x + 1, y] +
+                                heightMap[x - 1, y] +
+                                heightMap[x + 1, y - 1] +
+                                heightMap[x - 1, y - 1] +
+                                heightMap[x, y - 1]) / 6.0f;
+                }
+                else if (x == width - 1 && y > height - 1 && y < 0)
+                {
+                    avgHeight = (heightMap[x, y] +
+                                heightMap[x - 1, y] +
+                                heightMap[x - 1, y + 1] +
+                                heightMap[x - 1, y - 1] +
+                                heightMap[x, y + 1] +
+                                heightMap[x, y - 1]) / 6.0f;
+                }
+                else if (y > 0 && x > 0 && y < height - 1 && x < width - 1)
+                {
+                    avgHeight = (heightMap[x, y] +
+                                heightMap[x + 1, y] +
+                                heightMap[x - 1, y] +
+                                heightMap[x + 1, y + 1] +
+                                heightMap[x - 1, y - 1] +
+                                heightMap[x + 1, y - 1] +
+                                heightMap[x - 1, y + 1] +
+                                heightMap[x, y + 1] +
+                                heightMap[x, y - 1]) / 9.0f;
+                }
+
+                heightMap[x, y] = avgHeight;
+            }
+        }
+        terrainData.SetHeights(0, 0, heightMap);
+    }
+    #endregion
 
     #region middle point 中点位移法
     public void MidPointDisplacement()
